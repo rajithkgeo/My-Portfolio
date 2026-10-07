@@ -35,21 +35,51 @@ body::before{
   content:"";position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.5;mix-blend-mode:multiply;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.1 0 0 0 0 0.1 0 0 0 0 0.08 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
+
 /*  living background: contours + orbiting satellites  */
-.bg-scene{position:fixed;inset:-4%;z-index:-1;overflow:hidden;pointer-events:none;will-change:transform}
+.bg-scene{
+  position:fixed;
+  /* Extended padding so the edges don't show when it pans during scrolling */
+  inset:-25% -15%;
+  z-index:-1;
+  overflow:hidden;
+  pointer-events:none;
+  will-change:transform;
+}
 .bg-scene svg{width:100%;height:100%;display:block}
-.bg-contour{fill:none;stroke-width:1.5;transform-box:fill-box;transform-origin:center;animation:contourSway 46s ease-in-out infinite alternate}
-.bg-contour.c1{stroke:var(--slate);opacity:.11}
-.bg-contour.c2{stroke:var(--clay);opacity:.09;animation-delay:-9s}
-.bg-contour.c3{stroke:var(--moss);opacity:.1;animation-delay:-18s}
-.bg-contour.c4{stroke:var(--sand);opacity:.09;animation-delay:-27s}
-.bg-contour.c5{stroke:var(--slate);opacity:.08;animation-delay:-36s}
-@keyframes contourSway{0%{transform:translate(0,0)}50%{transform:translate(-16px,9px)}100%{transform:translate(13px,-7px)}}
-.bg-orbit{fill:none;stroke:var(--ink-faint);stroke-width:1;stroke-dasharray:2 7;opacity:.18}
-.bg-sat circle{fill:var(--clay);opacity:.6;filter:drop-shadow(0 0 4px currentColor)}
-.bg-sat.s2 circle{fill:var(--slate)}
-.bg-sat.s3 circle{fill:var(--moss)}
-@media (prefers-reduced-motion:reduce){.bg-contour{animation:none}}
+
+/* Group animation ensures lines NEVER cross because they move as one unit */
+.terrain-contours {
+  mix-blend-mode: multiply;
+  animation: mapSway 35s cubic-bezier(0.4, 0.0, 0.6, 1) infinite alternate;
+  transform-origin: center;
+}
+
+@keyframes mapSway{
+  0%{transform: scale(1.05) translate(-1.5%, -1.5%) rotate(-0.5deg)}
+  100%{transform: scale(1.05) translate(1.5%, 1.5%) rotate(0.5deg)}
+}
+
+.bg-contour{
+  fill:none;
+  stroke-width:0.8; /* Thinner lines mimicking real topo maps */
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Base opacities - no separate animations so they maintain parallel spacing */
+.bg-contour.c1{stroke:var(--slate);opacity:.18}
+.bg-contour.c2{stroke:var(--clay);opacity:.16}
+.bg-contour.c3{stroke:var(--moss);opacity:.18}
+.bg-contour.c4{stroke:var(--sand);opacity:.16}
+.bg-contour.c5{stroke:var(--slate);opacity:.14}
+
+.bg-orbit{fill:none;stroke:var(--ink-faint);stroke-width:1.5;stroke-dasharray:4 8;opacity:.25}
+.bg-sat{opacity:.75;filter:drop-shadow(0 2px 4px rgba(28,29,25,.2))}
+.bg-sat.s1{fill:var(--clay);stroke:var(--clay)}
+.bg-sat.s2{fill:var(--slate);stroke:var(--slate)}
+.bg-sat.s3{fill:var(--moss);stroke:var(--moss)}
+@media (prefers-reduced-motion:reduce){.terrain-contours{animation:none}}
 @media (max-width:720px){.bg-scene{opacity:.65}}
 
 a{color:inherit;text-decoration:none}
@@ -286,19 +316,75 @@ footer{padding:20px 0 34px;color:var(--ink-faint);display:flex;justify-content:s
 
 <div class="bg-scene" aria-hidden="true">
   <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <path class="bg-contour c1" d="M-50,120 C250,40 450,200 700,110 C950,30 1150,150 1300,90"/>
-    <path class="bg-contour c2" d="M-50,260 C300,340 500,200 760,300 C1000,380 1150,260 1300,320"/>
-    <path class="bg-contour c3" d="M-50,420 C280,360 480,480 740,400 C980,330 1150,430 1300,380"/>
-    <path class="bg-contour c4" d="M-50,560 C300,500 520,620 780,540 C1020,470 1180,560 1300,520"/>
-    <path class="bg-contour c5" d="M-50,700 C320,640 540,740 800,680 C1040,630 1180,700 1300,660"/>
+    
+    <!-- STRICTLY NON-INTERSECTING TOPOGRAPHICAL CONTOURS -->
+    <g class="terrain-contours">
+      
+      <!-- Top Left Peak (Concentric elevation rings) -->
+      <path class="bg-contour c1" d="M 150,100 C 225,100 210,210 150,200 C 90,210 75,100 150,100 Z" />
+      <path class="bg-contour c2" d="M 150,60 C 285,60 258,258 150,240 C 42,258 15,60 150,60 Z" />
+      <path class="bg-contour c3" d="M 150,10 C 360,10 318,318 150,290 C -18,318 -60,10 150,10 Z" />
+      <path class="bg-contour c4" d="M 150,-50 C 450,-50 390,390 150,350 C -90,390 -150,-50 150,-50 Z" />
+      <path class="bg-contour c5" d="M 150,-120 C 555,-120 474,474 150,420 C -174,474 -255,-120 150,-120 Z" />
 
+      <!-- Bottom Right Peak (Concentric elevation rings) -->
+      <path class="bg-contour c1" d="M 1050,600 C 1125,600 1110,710 1050,700 C 990,710 975,600 1050,600 Z" />
+      <path class="bg-contour c2" d="M 1050,560 C 1185,560 1158,758 1050,740 C 942,758 915,560 1050,560 Z" />
+      <path class="bg-contour c3" d="M 1050,510 C 1260,510 1218,818 1050,790 C 882,818 840,510 1050,510 Z" />
+      <path class="bg-contour c4" d="M 1050,450 C 1350,450 1290,890 1050,850 C 750,890 690,450 1050,450 Z" />
+      <path class="bg-contour c5" d="M 1050,380 C 1455,380 1374,974 1050,920 C 726,974 645,380 1050,380 Z" />
+
+      <!-- Sweeping Valley (Parallel offset curves) -->
+      <path class="bg-contour c5" d="M -200,740 Q 420,640 500,300 T 1400,-300" />
+      <path class="bg-contour c4" d="M -200,780 Q 440,680 525,325 T 1400,-250" />
+      <path class="bg-contour c3" d="M -200,820 Q 460,720 550,350 T 1400,-200" />
+      <path class="bg-contour c2" d="M -200,860 Q 480,760 575,375 T 1400,-150" />
+      <path class="bg-contour c1" d="M -200,900 Q 500,800 600,400 T 1400,-100" />
+      <path class="bg-contour c2" d="M -200,940 Q 520,840 625,425 T 1400,-50" />
+      <path class="bg-contour c3" d="M -200,980 Q 540,880 650,450 T 1400,0" />
+      <path class="bg-contour c4" d="M -200,1020 Q 560,920 675,475 T 1400,50" />
+      
+    </g>
+
+    <!-- Orbit Paths -->
     <path id="orbitPath1" class="bg-orbit" d="M40,180 a220,80 0 1,0 440,0 a220,80 0 1,0 -440,0"/>
     <path id="orbitPath2" class="bg-orbit" d="M560,420 a260,100 0 1,0 520,0 a260,100 0 1,0 -520,0"/>
     <path id="orbitPath3" class="bg-orbit" d="M180,640 a300,70 0 1,0 600,0 a300,70 0 1,0 -600,0"/>
 
-    <g class="bg-sat s1"><circle r="3.4"/><animateMotion dur="32s" repeatCount="indefinite"><mpath href="#orbitPath1" xlink:href="#orbitPath1"/></animateMotion></g>
-    <g class="bg-sat s2"><circle r="3"/><animateMotion dur="46s" repeatCount="indefinite"><mpath href="#orbitPath2" xlink:href="#orbitPath2"/></animateMotion></g>
-    <g class="bg-sat s3"><circle r="2.6"/><animateMotion dur="38s" repeatCount="indefinite"><mpath href="#orbitPath3" xlink:href="#orbitPath3"/></animateMotion></g>
+    <!-- Actual Satellite Icons -->
+    <g class="bg-sat s1">
+      <g transform="scale(0.65)">
+        <rect x="-24" y="-8" width="16" height="16" rx="2" stroke="none"/>
+        <rect x="8" y="-8" width="16" height="16" rx="2" stroke="none"/>
+        <rect x="-6" y="-12" width="12" height="24" rx="3" stroke="none"/>
+        <path d="M-8,16 Q0,26 8,16" fill="none" stroke-width="2"/>
+        <line x1="0" y1="12" x2="0" y2="18" stroke-width="2"/>
+        <circle cx="0" cy="18" r="2" stroke="none"/>
+      </g>
+      <animateMotion dur="32s" repeatCount="indefinite"><mpath href="#orbitPath1" xlink:href="#orbitPath1"/></animateMotion>
+    </g>
+
+    <g class="bg-sat s2">
+      <g transform="rotate(45) scale(0.55)">
+        <rect x="-24" y="-8" width="16" height="16" rx="2" stroke="none"/>
+        <rect x="8" y="-8" width="16" height="16" rx="2" stroke="none"/>
+        <rect x="-6" y="-12" width="12" height="24" rx="3" stroke="none"/>
+        <path d="M-8,-16 Q0,-26 8,-16" fill="none" stroke-width="2"/>
+        <line x1="0" y1="-12" x2="0" y2="-18" stroke-width="2"/>
+      </g>
+      <animateMotion dur="46s" repeatCount="indefinite"><mpath href="#orbitPath2" xlink:href="#orbitPath2"/></animateMotion>
+    </g>
+
+    <g class="bg-sat s3">
+      <g transform="rotate(-30) scale(0.5)">
+        <rect x="-24" y="-8" width="16" height="16" rx="2" stroke="none"/>
+        <rect x="8" y="-8" width="16" height="16" rx="2" stroke="none"/>
+        <rect x="-6" y="-12" width="12" height="24" rx="3" stroke="none"/>
+        <path d="M-8,16 Q0,26 8,16" fill="none" stroke-width="2"/>
+        <line x1="0" y1="12" x2="0" y2="18" stroke-width="2"/>
+      </g>
+      <animateMotion dur="38s" repeatCount="indefinite"><mpath href="#orbitPath3" xlink:href="#orbitPath3"/></animateMotion>
+    </g>
   </svg>
 </div>
 
@@ -679,7 +765,7 @@ footer{padding:20px 0 34px;color:var(--ink-faint);display:flex;justify-content:s
 </footer>
 
 <script>
-/* living background: parallax drift*/
+/* living background: intense parallax drift + scroll movement */
 (function(){
   const scene=document.querySelector(".bg-scene");
   const sceneSvg=document.querySelector(".bg-scene svg");
@@ -687,16 +773,37 @@ footer{padding:20px 0 34px;color:var(--ink-faint);display:flex;justify-content:s
   if(sceneSvg && wantsReduced && typeof sceneSvg.pauseAnimations==="function"){
     sceneSvg.pauseAnimations();
   }
-  const canHover=window.matchMedia("(hover:hover) and (pointer:fine)").matches;
-  if(!scene || !canHover || wantsReduced) return;
+  
+  if(!scene || wantsReduced) return;
+  
   let tx=0, ty=0, cx=0, cy=0;
-  window.addEventListener("mousemove",e=>{
-    tx=-(e.clientX/window.innerWidth-0.5)*18;
-    ty=-(e.clientY/window.innerHeight-0.5)*14;
+  let targetScrollY = 0;
+  let targetScrollX = 0;
+  const canHover=window.matchMedia("(hover:hover) and (pointer:fine)").matches;
+  
+  if(canHover){
+    window.addEventListener("mousemove",e=>{
+      tx=-(e.clientX/window.innerWidth-0.5)*30;
+      ty=-(e.clientY/window.innerHeight-0.5)*30;
+    });
+  }
+
+  // Calculate the diagonal map shift based on deep scroll progress
+  window.addEventListener("scroll", () => {
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const scrollPct = docHeight > 0 ? window.scrollY / docHeight : 0;
+    
+    // Shifts the background up by 35% of the viewport and left by 15%
+    targetScrollY = -(scrollPct * (window.innerHeight * 0.35));
+    targetScrollX = -(scrollPct * (window.innerWidth * 0.15));
   });
+
   function driftLoop(){
-    cx+=(tx-cx)*0.035; cy+=(ty-cy)*0.035;
-    scene.style.transform=`translate(${cx.toFixed(2)}px,${cy.toFixed(2)}px)`;
+    // Blend mouse movement (tx, ty) with the physical page scroll displacement
+    cx += ((tx + targetScrollX) - cx) * 0.045; 
+    cy += ((ty + targetScrollY) - cy) * 0.045;
+    
+    scene.style.transform=`translate(${cx.toFixed(2)}px, ${cy.toFixed(2)}px)`;
     requestAnimationFrame(driftLoop);
   }
   driftLoop();
